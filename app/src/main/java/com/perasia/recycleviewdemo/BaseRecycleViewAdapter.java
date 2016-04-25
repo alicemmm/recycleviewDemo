@@ -3,6 +3,7 @@ package com.perasia.recycleviewdemo;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.util.SparseArray;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,7 +11,7 @@ import android.view.ViewGroup;
 import java.util.ArrayList;
 import java.util.List;
 
-public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter {
+public abstract class BaseRecycleViewAdapter<T> extends RecyclerView.Adapter {
     private static final String TAG = BaseRecycleViewAdapter.class.getSimpleName();
 
     protected static final int TYPE_HEADER = -1;
@@ -46,9 +47,9 @@ public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHold
         this.itemClickListener = l;
     }
 
-    public abstract VH onCreateItemViewHolder(ViewGroup parent);
+    public abstract int getItemResource();
 
-    public abstract void onBindItemViewHolder(final VH holder, int position);
+    public abstract void onBindItemViewHolder(BaseViewHolder holder, int position);
 
     public BaseRecycleViewAdapter(Context context) {
         mContext = context;
@@ -56,11 +57,15 @@ public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHold
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = null;
+
         if (viewType == TYPE_FOOTER) {
-            View view = LayoutInflater.from(mContext).inflate(R.layout.recycleview_footer, parent, false);
+            view = LayoutInflater.from(mContext).inflate(R.layout.recycleview_footer, parent, false);
             return new FooterViewHolder(view);
         }
-        return onCreateItemViewHolder(parent);
+
+        view = LayoutInflater.from(mContext).inflate(getItemResource(), parent, false);
+        return new BaseViewHolder(view);
     }
 
     @Override
@@ -72,6 +77,8 @@ public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHold
             return;
         }
 
+        BaseViewHolder baseViewHolder = (BaseViewHolder) holder;
+
         if (itemClickListener != null) {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
                 @Override
@@ -81,7 +88,7 @@ public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHold
             });
         }
 
-        onBindItemViewHolder((VH) holder, position);
+        onBindItemViewHolder(baseViewHolder, position);
     }
 
     @Override
@@ -148,6 +155,27 @@ public abstract class BaseRecycleViewAdapter<T, VH extends RecyclerView.ViewHold
 
     public void clear() {
         mList.clear();
+    }
+
+    public static class BaseViewHolder extends RecyclerView.ViewHolder {
+        private final SparseArray<View> views;
+
+        private View convertView;
+
+        public BaseViewHolder(View itemView) {
+            super(itemView);
+            views = new SparseArray<>();
+            convertView = itemView;
+        }
+
+        protected <T extends View> T getView(int viewId) {
+            View view = views.get(viewId);
+            if (view == null) {
+                view = convertView.findViewById(viewId);
+                views.put(viewId, view);
+            }
+            return (T) view;
+        }
     }
 
     public static class FooterViewHolder extends RecyclerView.ViewHolder {

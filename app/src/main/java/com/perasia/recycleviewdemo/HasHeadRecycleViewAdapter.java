@@ -7,7 +7,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewHolder> extends BaseRecycleViewAdapter {
+public abstract class HasHeadRecycleViewAdapter<T> extends BaseRecycleViewAdapter {
     private static final String TAG = HasHeadRecycleViewAdapter.class.getSimpleName();
 
     private boolean hasHeader;
@@ -22,9 +22,9 @@ public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewH
         this.itemHeadClickListener = l;
     }
 
-    public abstract VH onCreateHeaderViewHolder(ViewGroup parent);
+    public abstract int getHeadResource();
 
-    public abstract void onBindHeaderViewHolder(final VH holder, int position);
+    public abstract void onBindHeaderViewHolder(BaseViewHolder holder, int position);
 
     public HasHeadRecycleViewAdapter(Context context) {
         super(context);
@@ -33,19 +33,24 @@ public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewH
 
     @Override
     public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
+        View view = null;
         if (viewType == TYPE_HEADER) {
-            return onCreateHeaderViewHolder(parent);
+            view = LayoutInflater.from(mContext).inflate(getHeadResource(), parent, false);
+            return new BaseViewHolder(view);
         } else if (viewType == TYPE_FOOTER) {
-            View view = LayoutInflater.from(mContext).inflate(R.layout.recycleview_footer, parent, false);
+            view = LayoutInflater.from(mContext).inflate(R.layout.recycleview_footer, parent, false);
             return new FooterViewHolder(view);
         }
 
-        return onCreateItemViewHolder(parent);
+        view = LayoutInflater.from(mContext).inflate(getItemResource(), parent, false);
+        return new BaseViewHolder(view);
     }
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, final int position) {
         if (position == 0 && holder.getItemViewType() == TYPE_HEADER) {
+            BaseViewHolder baseViewHolder = (BaseViewHolder) holder;
+
             if (itemHeadClickListener != null) {
                 holder.itemView.setOnClickListener(new View.OnClickListener() {
                     @Override
@@ -54,7 +59,7 @@ public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewH
                     }
                 });
             }
-            onBindHeaderViewHolder((VH) holder, position);
+            onBindHeaderViewHolder(baseViewHolder, position);
             return;
         } else if (position == getBasicItemCount() && holder.getItemViewType() == TYPE_FOOTER) {
             if (hasFooter && mRequestLoadMoreListener != null) {
@@ -62,6 +67,8 @@ public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewH
             }
             return;
         }
+
+        BaseViewHolder baseViewHolder = (BaseViewHolder) holder;
 
         if (itemClickListener != null) {
             holder.itemView.setOnClickListener(new View.OnClickListener() {
@@ -71,7 +78,8 @@ public abstract class HasHeadRecycleViewAdapter<T, VH extends RecyclerView.ViewH
                 }
             });
         }
-        onBindItemViewHolder((VH) holder, position - (hasHeader ? 1 : 0));
+
+        onBindItemViewHolder(baseViewHolder, position - (hasHeader ? 1 : 0));
     }
 
     @Override

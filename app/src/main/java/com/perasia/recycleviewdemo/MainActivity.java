@@ -57,7 +57,6 @@ public class MainActivity extends AppCompatActivity implements BaseRecycleViewAd
 
     }
 
-
     @Override
     public void onLoadMoreRequested() {
         getData();
